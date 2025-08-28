@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Subjects - AI Study Helper{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-book me-2"></i>My Subjects</h2>
+    <a href="{{ url_for('add_subject') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Add New Subject
+    </a>
+</div>
+
+{% if subjects %}
+<div class="row g-4">
+    {% for subject in subjects %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="card-title mb-0">{{ subject[1] }}</h5>
+                    <span class="badge bg-primary">{{ subject[0] }}</span>
+                </div>
+                
+                {% if subject[2] %}
+                <p class="card-text text-muted">{{ subject[2] }}</p>
+                {% else %}
+                <p class="card-text text-muted"><em>No description provided</em></p>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>Created: {{ subject[3][:10] if subject[3] else 'Unknown' }}
+                    </small>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editSubject({{ subject[0] }})">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="startStudy({{ subject[0] }})">
+                        <i class="fas fa-play me-1"></i>Study
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="addFlashcard({{ subject[0] }})">
+                        <i class="fas fa-plus me-1"></i>Flashcard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <div class="mb-4">
+        <i class="fas fa-book fa-4x text-muted"></i>
+    </div>
+    <h4 class="text-muted mb-3">No subjects yet</h4>
+    <p class="text-muted mb-4">Start by adding your first subject to organize your studies.</p>
+    <a href="{{ url_for('add_subject') }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus me-2"></i>Add Your First Subject
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editSubject(subjectId) {
+    // TODO: Implement edit functionality
+    alert('Edit functionality coming soon!');
+}
+
+function startStudy(subjectId) {
+    // Redirect to study session with pre-selected subject
+    window.location.href = "{{ url_for('study_session') }}?subject=" + subjectId;
+}
+
+function addFlashcard(subjectId) {
+    // Redirect to add flashcard with pre-selected subject
+    window.location.href = "{{ url_for('add_flashcard') }}?subject=" + subjectId;
+}
+</script>
+{% endblock %}

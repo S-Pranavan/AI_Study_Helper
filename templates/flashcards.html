@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Flashcards - AI Study Helper{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-sticky-note me-2"></i>My Flashcards</h2>
+    <a href="{{ url_for('add_flashcard') }}" class="btn btn-warning">
+        <i class="fas fa-plus me-2"></i>Add New Flashcard
+    </a>
+</div>
+
+{% if flashcards %}
+<div class="row g-4">
+    {% for flashcard in flashcards %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                <span class="badge bg-primary">{{ flashcard[6] }}</span>
+                <span class="badge bg-{{ 'success' if flashcard[4] == 1 else 'warning' if flashcard[4] == 2 else 'danger' }}">
+                    Level {{ flashcard[4] }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="card-subtitle mb-2 text-muted">Question:</h6>
+                    <p class="card-text">{{ flashcard[2] }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="card-subtitle mb-2 text-muted">Answer:</h6>
+                    <p class="card-text" id="answer-{{ flashcard[0] }}" style="display: none;">{{ flashcard[3] }}</p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="toggleAnswer({{ flashcard[0] }})">
+                        <span id="toggle-text-{{ flashcard[0] }}">Show Answer</span>
+                    </button>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>Created: {{ flashcard[5][:10] if flashcard[5] else 'Unknown' }}
+                    </small>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-success" onclick="markCorrect({{ flashcard[0] }})">
+                        <i class="fas fa-check me-1"></i>Correct
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="markIncorrect({{ flashcard[0] }})">
+                        <i class="fas fa-times me-1"></i>Incorrect
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="editFlashcard({{ flashcard[0] }})">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Flashcard Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="h4 text-primary">{{ flashcards|length }}</div>
+                        <small class="text-muted">Total Cards</small>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h4 text-success">{{ flashcards|selectattr('4', 'equalto', 1)|list|length }}</div>
+                        <small class="text-muted">Easy Level</small>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h4 text-warning">{{ flashcards|selectattr('4', 'equalto', 2)|list|length }}</div>
+                        <small class="text-muted">Medium Level</small>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h4 text-danger">{{ flashcards|selectattr('4', 'equalto', 3)|list|length }}</div>
+                        <small class="text-muted">Hard Level</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <div class="mb-4">
+        <i class="fas fa-sticky-note fa-4x text-muted"></i>
+    </div>
+    <h4 class="text-muted mb-3">No flashcards yet</h4>
+    <p class="text-muted mb-4">Start building your knowledge with personalized flashcards.</p>
+    <a href="{{ url_for('add_flashcard') }}" class="btn btn-warning btn-lg">
+        <i class="fas fa-plus me-2"></i>Create Your First Flashcard
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleAnswer(flashcardId) {
+    const answerElement = document.getElementById(`answer-${flashcardId}`);
+    const toggleText = document.getElementById(`toggle-text-${flashcardId}`);
+    
+    if (answerElement.style.display === 'none') {
+        answerElement.style.display = 'block';
+        toggleText.textContent = 'Hide Answer';
+    } else {
+        answerElement.style.display = 'none';
+        toggleText.textContent = 'Show Answer';
+    }
+}
+
+function markCorrect(flashcardId) {
+    // TODO: Implement spaced repetition algorithm
+    alert('Great job! This card will be shown less frequently.');
+}
+
+function markIncorrect(flashcardId) {
+    // TODO: Implement spaced repetition algorithm
+    alert('Keep practicing! This card will be shown more frequently.');
+}
+
+function editFlashcard(flashcardId) {
+    // TODO: Implement edit functionality
+    alert('Edit functionality coming soon!');
+}
+</script>
+{% endblock %}

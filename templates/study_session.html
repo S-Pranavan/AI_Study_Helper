@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Study Session - AI Study Helper{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Record Study Session
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="subject_id" class="form-label">Subject *</label>
+                        <select class="form-select" id="subject_id" name="subject_id" required>
+                            <option value="">Choose a subject...</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject[0] }}">{{ subject[1] }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not subjects %}
+                        <div class="form-text text-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            No subjects available. <a href="{{ url_for('add_subject') }}">Add a subject first</a>.
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="duration" class="form-label">Study Duration (minutes) *</label>
+                        <input type="number" class="form-control" id="duration" name="duration" 
+                               min="1" max="480" required placeholder="e.g., 45">
+                        <div class="form-text">Enter the time you spent studying in minutes.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Session Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="4" 
+                                  placeholder="What did you study? Any key concepts, difficulties, or achievements..."></textarea>
+                        <div class="form-text">Optional notes to help you track your progress and remember what you covered.</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success" {% if not subjects %}disabled{% endif %}>
+                            <i class="fas fa-save me-2"></i>Save Study Session
+                        </button>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Home
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-timer me-2"></i>Study Timer
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <div class="display-4 fw-bold text-primary" id="timer">25:00</div>
+                    <small class="text-muted">Pomodoro Timer (25 min)</small>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" id="startTimer">
+                        <i class="fas fa-play me-2"></i>Start Timer
+                    </button>
+                    <button class="btn btn-outline-secondary" id="resetTimer" style="display: none;">
+                        <i class="fas fa-redo me-2"></i>Reset
+                    </button>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Use the Pomodoro technique: 25 min focus, 5 min break
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Study Tips
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Set specific goals for each session
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Take short breaks every 25 minutes
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Review your notes after each session
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let timerInterval;
+let timeLeft = 25 * 60; // 25 minutes in seconds
+let isRunning = false;
+
+function updateTimer() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    document.getElementById('timer').textContent = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function startTimer() {
+    if (!isRunning) {
+        isRunning = true;
+        document.getElementById('startTimer').style.display = 'none';
+        document.getElementById('resetTimer').style.display = 'block';
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateTimer();
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                alert('Time is up! Take a 5-minute break.');
+                resetTimer();
+            }
+        }, 1000);
+    }
+}
+
+function resetTimer() {
+    clearInterval(timerInterval);
+    timeLeft = 25 * 60;
+    isRunning = false;
+    updateTimer();
+    document.getElementById('startTimer').style.display = 'block';
+    document.getElementById('resetTimer').style.display = 'none';
+}
+
+document.getElementById('startTimer').addEventListener('click', startTimer);
+document.getElementById('resetTimer').addEventListener('click', resetTimer);
+
+// Auto-fill subject if passed in URL
+const urlParams = new URLSearchParams(window.location.search);
+const subjectId = urlParams.get('subject');
+if (subjectId) {
+    document.getElementById('subject_id').value = subjectId;
+}
+</script>
+{% endblock %}

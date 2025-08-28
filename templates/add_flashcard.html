@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Add Flashcard - AI Study Helper{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0">
+                    <i class="fas fa-plus me-2"></i>Add New Flashcard
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="subject_id" class="form-label">Subject *</label>
+                        <select class="form-select" id="subject_id" name="subject_id" required>
+                            <option value="">Choose a subject...</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject[0] }}">{{ subject[1] }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not subjects %}
+                        <div class="form-text text-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            No subjects available. <a href="{{ url_for('add_subject') }}">Add a subject first</a>.
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="question" class="form-label">Question *</label>
+                        <textarea class="form-control" id="question" name="question" rows="3" 
+                                  required placeholder="What question or concept do you want to remember?"></textarea>
+                        <div class="form-text">Write a clear, specific question that tests your knowledge.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="answer" class="form-label">Answer *</label>
+                        <textarea class="form-control" id="answer" name="answer" rows="4" 
+                                  required placeholder="What is the answer or explanation?"></textarea>
+                        <div class="form-text">Provide a comprehensive answer that helps you understand the concept.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="difficulty" class="form-label">Difficulty Level</label>
+                        <select class="form-select" id="difficulty" name="difficulty">
+                            <option value="1">Easy - I know this well</option>
+                            <option value="2" selected>Medium - I'm learning this</option>
+                            <option value="3">Hard - I need to practice this</option>
+                        </select>
+                        <div class="form-text">This helps with spaced repetition scheduling.</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-warning" {% if not subjects %}disabled{% endif %}>
+                            <i class="fas fa-save me-2"></i>Save Flashcard
+                        </button>
+                        <a href="{{ url_for('flashcards') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Flashcards
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Tips for Effective Flashcards
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Keep questions and answers concise but complete
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Use active recall questions (e.g., "What is..." instead of "Is...")
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Include context clues to help with understanding
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Review cards regularly using spaced repetition
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-fill subject if passed in URL
+const urlParams = new URLSearchParams(window.location.search);
+const subjectId = urlParams.get('subject');
+if (subjectId) {
+    document.getElementById('subject_id').value = subjectId;
+}
+</script>
+{% endblock %}
