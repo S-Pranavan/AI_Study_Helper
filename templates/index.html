@@ -76,6 +76,85 @@
     </div>
 </div>
 
+<!-- OCR Modal -->
+<div class="modal fade" id="ocrModal" tabindex="-1" aria-labelledby="ocrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="ocrModalLabel">
+                    <i class="fas fa-camera me-2"></i>Enhanced OCR Image Processing
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- OCR System Info -->
+                <div class="alert alert-info mb-3">
+                    <h6><i class="fas fa-info-circle me-2"></i>Enhanced OCR Capabilities</h6>
+                    <p class="mb-1"><strong>Supported:</strong> Handwritten notes, textbook pages, diagrams, mathematical content, low-quality images</p>
+                    <p class="mb-0"><strong>Features:</strong> Advanced preprocessing, content classification, study suggestions, text filtering</p>
+                </div>
+
+                <!-- Single File Upload -->
+                <div class="mb-4">
+                    <h6><i class="fas fa-image me-2"></i>Image Upload & Processing</h6>
+                    <div class="upload-area border-2 border-dashed border-primary rounded p-4 text-center" id="singleUploadArea">
+                        <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-3"></i>
+                        <h6>Drag & Drop Image Here</h6>
+                        <p class="text-muted small">or click to browse</p>
+                        <p class="text-muted small">Supports: PNG, JPG, GIF, BMP, TIFF, WEBP</p>
+                        <input type="file" id="singleFileInput" accept="image/*" class="d-none">
+                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('singleFileInput').click()">
+                            <i class="fas fa-folder-open me-2"></i>Choose Image
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Processing Status -->
+                <div class="processing-spinner text-center d-none" id="processingSpinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Processing...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Processing image with enhanced OCR...</p>
+                    <small class="text-muted">This may take a few moments for complex images</small>
+                </div>
+
+                <!-- Results -->
+                <div id="ocrResults" class="d-none">
+                    <h6><i class="fas fa-file-alt me-2"></i>OCR Results & Analysis</h6>
+                    
+                    <!-- Content Classification -->
+                    <div class="row mb-3" id="contentClassification">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                    
+                    <!-- Text Results -->
+                    <div class="card bg-light mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Extracted Text</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="resultsContent"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Study Suggestions -->
+                    <div class="card bg-success text-white mb-3" id="studySuggestions">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>AI Study Suggestions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="suggestionsContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-lg-8">
         <div class="card">

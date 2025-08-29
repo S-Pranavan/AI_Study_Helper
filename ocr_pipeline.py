@@ -32,6 +32,8 @@ class OCRPipeline:
     
     def __init__(self):
         """Initialize OCR pipeline with enhanced settings."""
+        global EASYOCR_AVAILABLE
+        
         self.supported_formats = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp'}
         self.max_image_size = 3000  # Increased for better quality
         
@@ -53,7 +55,7 @@ class OCRPipeline:
             'sharpen': True,
             'adaptive_threshold': True
         }
-        
+    
     def validate_image(self, image_path: str) -> bool:
         """
         Validate if the image file is supported and exists.
@@ -343,21 +345,29 @@ class OCRPipeline:
         text_lower = text.lower()
         
         # Check for mathematical content
-        if any(char in text for char in '+-*/=()[]{}'):
+        if any(char in text for char in '+-*/=()[]{}∫∑∏√∞'):
             return 'mathematical'
         
         # Check for scientific content
-        scientific_terms = ['equation', 'formula', 'theorem', 'hypothesis', 'experiment']
+        scientific_terms = ['equation', 'formula', 'theorem', 'hypothesis', 'experiment', 'molecule', 'atom', 'cell', 'organism', 'species', 'genus', 'phylum']
         if any(term in text_lower for term in scientific_terms):
             return 'scientific'
         
-        # Check for handwritten notes
-        if len(text.split()) < 20:  # Short text often indicates notes
+        # Check for diagram content (labels, short text)
+        if len(text.split()) < 15 and any(word in text_lower for word in ['diagram', 'label', 'figure', 'chart', 'graph']):
+            return 'diagram'
+        
+        # Check for handwritten notes (short, informal text)
+        if len(text.split()) < 25 and any(word in text_lower for word in ['note', 'todo', 'remember', 'important', 'key', 'main']):
             return 'handwritten_notes'
         
-        # Check for textbook content
-        if len(text.split()) > 50:  # Long text often indicates textbook
+        # Check for textbook content (long, formal text)
+        if len(text.split()) > 40:
             return 'textbook'
+        
+        # Check for mixed quality indicators
+        if any(char in text for char in '?!@#$%^&*()_+-=[]{}|;:,.<>?') and len(text.split()) < 20:
+            return 'mixed_quality'
         
         return 'general'
     
@@ -370,32 +380,67 @@ class OCRPipeline:
         }
         
         if content_type == 'mathematical':
-            suggestions['summary'] = 'Mathematical content detected. Consider breaking down into steps.'
-            suggestions['explanation'] = 'Focus on understanding the mathematical concepts and formulas.'
+            suggestions['summary'] = 'Mathematical content detected. Break down into logical steps and understand the underlying principles.'
+            suggestions['explanation'] = 'Focus on understanding the mathematical concepts, formulas, and their applications. Practice similar problems.'
             suggestions['quiz_questions'] = [
                 'Can you solve this equation step by step?',
-                'What mathematical principles are being applied here?'
+                'What mathematical principles are being applied here?',
+                'How would you verify this solution?',
+                'What are the key variables and their relationships?'
             ]
         elif content_type == 'scientific':
-            suggestions['summary'] = 'Scientific content detected. Focus on key concepts and definitions.'
-            suggestions['explanation'] = 'Understand the scientific principles and their applications.'
+            suggestions['summary'] = 'Scientific content detected. Focus on key concepts, definitions, and their relationships.'
+            suggestions['explanation'] = 'Understand the scientific principles, experimental methods, and real-world applications.'
             suggestions['quiz_questions'] = [
                 'What are the main scientific concepts mentioned?',
-                'How would you explain this to someone else?'
+                'How would you explain this to someone else?',
+                'What are the practical applications of this knowledge?',
+                'What questions does this raise for further investigation?'
+            ]
+        elif content_type == 'diagram':
+            suggestions['summary'] = 'Diagram content detected. Focus on understanding the visual relationships and labels.'
+            suggestions['explanation'] = 'Analyze the diagram structure, identify key components, and understand their connections.'
+            suggestions['quiz_questions'] = [
+                'What are the main components shown in this diagram?',
+                'How do the different parts relate to each other?',
+                'Can you recreate this diagram from memory?',
+                'What would happen if one component was missing?'
             ]
         elif content_type == 'handwritten_notes':
-            suggestions['summary'] = 'Handwritten notes detected. Organize key points into structured format.'
-            suggestions['explanation'] = 'Review and expand on your notes for better understanding.'
+            suggestions['summary'] = 'Handwritten notes detected. Organize key points into a structured format for better retention.'
+            suggestions['explanation'] = 'Review and expand on your notes, connect related concepts, and create a study guide.'
             suggestions['quiz_questions'] = [
                 'What are the main points from these notes?',
-                'How can you organize this information better?'
+                'How can you organize this information better?',
+                'What connections can you make to other topics?',
+                'How would you teach this to someone else?'
             ]
-        else:
-            suggestions['summary'] = 'General content detected. Extract key information and main ideas.'
-            suggestions['explanation'] = 'Break down complex concepts into simpler terms.'
+        elif content_type == 'textbook':
+            suggestions['summary'] = 'Textbook content detected. Extract key information and create concise summaries.'
+            suggestions['explanation'] = 'Break down complex concepts into simpler terms, identify main ideas, and create study aids.'
             suggestions['quiz_questions'] = [
                 'What are the main ideas presented?',
-                'How would you summarize this content?'
+                'How would you summarize this content?',
+                'What are the key takeaways?',
+                'How does this relate to what you already know?'
+            ]
+        elif content_type == 'mixed_quality':
+            suggestions['summary'] = 'Mixed quality content detected. Focus on extracting clear, readable text and improving image quality.'
+            suggestions['explanation'] = 'Consider retaking the photo with better lighting, focus, and angle for improved OCR results.'
+            suggestions['quiz_questions'] = [
+                'What text can you clearly read from this image?',
+                'How could you improve the image quality?',
+                'What are the main concepts despite the quality issues?',
+                'How would you verify the extracted information?'
+            ]
+        else:
+            suggestions['summary'] = 'General content detected. Extract key information and main ideas for study purposes.'
+            suggestions['explanation'] = 'Break down complex concepts into simpler terms and create study materials.'
+            suggestions['quiz_questions'] = [
+                'What are the main ideas presented?',
+                'How would you summarize this content?',
+                'What questions does this raise?',
+                'How can you apply this knowledge?'
             ]
         
         return suggestions
