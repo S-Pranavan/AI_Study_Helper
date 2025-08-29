@@ -84,7 +84,7 @@
                 <h5 class="modal-title" id="ocrModalLabel">
                     <i class="fas fa-camera me-2"></i>Enhanced OCR Image Processing
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" onclick="closeOCRModal()" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- OCR System Info -->
@@ -164,7 +164,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" onclick="closeOCRModal()">Close</button>
             </div>
         </div>
     </div>
@@ -560,9 +560,74 @@ function showError(message) {
 }
 
 function showOCRModal() {
-    const modal = new bootstrap.Modal(document.getElementById('ocrModal'));
-    modal.show();
+    try {
+        const modalElement = document.getElementById('ocrModal');
+        if (!modalElement) {
+            console.error('OCR modal element not found!');
+            return;
+        }
+        
+        // Use jQuery if available, otherwise use Bootstrap
+        if (typeof $ !== 'undefined' && $.fn.modal) {
+            $('#ocrModal').modal('show');
+        } else if (typeof bootstrap !== 'undefined') {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } else {
+            // Fallback: just show the modal directly
+            modalElement.style.display = 'block';
+            modalElement.classList.add('show');
+            document.body.classList.add('modal-open');
+            
+            // Add backdrop
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            document.body.appendChild(backdrop);
+        }
+    } catch (error) {
+        console.error('Error showing OCR modal:', error);
+        // Fallback: show modal directly
+        const modalElement = document.getElementById('ocrModal');
+        if (modalElement) {
+            modalElement.style.display = 'block';
+            modalElement.classList.add('show');
+        }
+    }
 }
+
+function closeOCRModal() {
+    try {
+        const modalElement = document.getElementById('ocrModal');
+        if (!modalElement) return;
+        
+        // Use jQuery if available, otherwise use Bootstrap
+        if (typeof $ !== 'undefined' && $.fn.modal) {
+            $('#ocrModal').modal('hide');
+        } else if (typeof bootstrap !== 'undefined') {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) modal.hide();
+        } else {
+            // Fallback: hide modal directly
+            modalElement.style.display = 'none';
+            modalElement.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            // Remove backdrop
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
+        }
+    } catch (error) {
+        console.error('Error closing OCR modal:', error);
+        // Fallback: hide modal directly
+        const modalElement = document.getElementById('ocrModal');
+        if (modalElement) {
+            modalElement.style.display = 'none';
+            modalElement.classList.remove('show');
+        }
+    }
+}
+
+
 </script>
 
 
