@@ -663,3 +663,4 @@ class MultilingualSupport:
             print(f"Error cleaning up old translations: {e}")
             return 0
 
+

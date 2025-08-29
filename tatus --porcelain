@@ -1,0 +1,5 @@
+[33m23e9b4d[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Add OCR functionality to main app and fix database initialization
+[33m7fa66af[m Complete Phase 5 implementation: Gamification, PWA Offline Support, and Multilingual Support - Added gamification_system.py with XP, levels, badges, and achievements - Added pwa_offline_support.py with offline capabilities and caching - Added multilingual_support.py with language detection and translation - Updated app_v6.py with integrated Phase 5 features - Added comprehensive test suite for Phase 5 - Added Phase 5 documentation and startup scripts - All previous phases (1-4) are now fully integrated
+[33m8584f25[m Phase 2: AI Content Generation - Complete implementation with Hugging Face models, enhanced frontend, and comprehensive testing
+[33m6b343d8[m Initial commit: AI Study Helper Phase 1 implementation with OCR pipeline, Flask backend, and Playwright tests
+[33me173ab1[m first commit

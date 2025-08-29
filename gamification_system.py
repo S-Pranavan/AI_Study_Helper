@@ -573,3 +573,4 @@ class GamificationSystem:
             print(f"Error getting recent activity: {e}")
             return []
 
+
