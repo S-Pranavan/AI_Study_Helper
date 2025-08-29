@@ -1,0 +1,32 @@
+# Azure Production Requirements for AI Study Helper
+# This file contains all dependencies needed for Azure deployment
+
+# Core Flask and web framework
+Flask==2.3.3
+gunicorn==21.2.0
+Werkzeug==2.3.7
+
+# Database
+# sqlite3 is built into Python, no pip install needed
+
+# Image processing and OCR
+opencv-python==4.8.1.78
+Pillow==10.0.1
+numpy==1.24.3
+easyocr==1.7.2
+
+# AI and machine learning
+scikit-learn==1.3.0
+scipy==1.11.1
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.31.0
+
+# Development and testing (optional for production)
+pytest==7.4.0
+playwright==1.40.0
+
+# Azure specific
+azure-functions==1.17.0
+azure-storage-blob==12.18.3
