@@ -572,3 +572,4 @@ class GamificationSystem:
         except Exception as e:
             print(f"Error getting recent activity: {e}")
             return []
+

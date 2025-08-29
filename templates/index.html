@@ -19,11 +19,26 @@
         <div class="card h-100 text-center">
             <div class="card-body">
                 <div class="mb-3">
-                    <i class="fas fa-book fa-3x text-primary"></i>
+                    <i class="fas fa-camera fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">OCR Processing</h5>
+                <p class="card-text">Extract text from handwritten notes and textbook images using AI-powered OCR.</p>
+                <button class="btn btn-primary" onclick="showOCRModal()">
+                    <i class="fas fa-arrow-right me-2"></i>Start OCR
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 text-center">
+            <div class="card-body">
+                <div class="mb-3">
+                    <i class="fas fa-book fa-3x text-success"></i>
                 </div>
                 <h5 class="card-title">Manage Subjects</h5>
                 <p class="card-text">Organize your study materials by subject and track your progress.</p>
-                <a href="{{ url_for('subjects') }}" class="btn btn-primary">
+                <a href="{{ url_for('subjects') }}" class="btn btn-success">
                     <i class="fas fa-arrow-right me-2"></i>Go to Subjects
                 </a>
             </div>
@@ -34,11 +49,11 @@
         <div class="card h-100 text-center">
             <div class="card-body">
                 <div class="mb-3">
-                    <i class="fas fa-clock fa-3x text-success"></i>
+                    <i class="fas fa-clock fa-3x text-info"></i>
                 </div>
                 <h5 class="card-title">Track Study Time</h5>
                 <p class="card-text">Monitor your study sessions and build consistent study habits.</p>
-                <a href="{{ url_for('study_session') }}" class="btn btn-success">
+                <a href="{{ url_for('study_session') }}" class="btn btn-info">
                     <i class="fas fa-arrow-right me-2"></i>Start Session
                 </a>
             </div>
@@ -59,18 +74,53 @@
             </div>
         </div>
     </div>
-    
-    <div class="col-md-6 col-lg-3">
-        <div class="card h-100 text-center">
-            <div class="card-body">
-                <div class="mb-3">
-                    <i class="fas fa-chart-line fa-3x text-info"></i>
+</div>
+
+<!-- OCR Modal -->
+<div class="modal fade" id="ocrModal" tabindex="-1" aria-labelledby="ocrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="ocrModalLabel">
+                    <i class="fas fa-camera me-2"></i>OCR Image Processing
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Single File Upload -->
+                <div class="mb-4">
+                    <h6><i class="fas fa-image me-2"></i>Single Image Processing</h6>
+                    <div class="upload-area border-2 border-dashed border-primary rounded p-4 text-center" id="singleUploadArea">
+                        <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-3"></i>
+                        <h6>Drag & Drop Image Here</h6>
+                        <p class="text-muted small">or click to browse</p>
+                        <input type="file" id="singleFileInput" accept="image/*" class="d-none">
+                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('singleFileInput').click()">
+                            <i class="fas fa-folder-open me-2"></i>Choose Image
+                        </button>
+                    </div>
                 </div>
-                <h5 class="card-title">Progress Analytics</h5>
-                <p class="card-text">Visualize your learning progress and identify areas for improvement.</p>
-                <a href="#" class="btn btn-info">
-                    <i class="fas fa-arrow-right me-2"></i>View Analytics
-                </a>
+
+                <!-- Processing Status -->
+                <div class="processing-spinner text-center d-none" id="processingSpinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Processing...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Processing image with OCR...</p>
+                </div>
+
+                <!-- Results -->
+                <div id="ocrResults" class="d-none">
+                    <h6><i class="fas fa-file-alt me-2"></i>OCR Results</h6>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <div id="resultsContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -128,6 +178,179 @@
         </div>
     </div>
 </div>
+
+<style>
+.upload-area {
+    border: 2px dashed #6c5ce7;
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+.upload-area:hover {
+    border-color: #5f4dd0;
+    background-color: #e9ecef;
+}
+.upload-area.dragover {
+    border-color: #5f4dd0;
+    background-color: #e9ecef;
+    transform: scale(1.02);
+}
+.confidence-high { color: #28a745; }
+.confidence-medium { color: #ffc107; }
+.confidence-low { color: #dc3545; }
+</style>
+
+<script>
+// Global variables
+let currentFile = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    setupDragAndDrop();
+    setupFileInputs();
+});
+
+// Setup drag and drop functionality
+function setupDragAndDrop() {
+    const singleArea = document.getElementById('singleUploadArea');
+    setupDragAndDropArea(singleArea, false);
+}
+
+function setupDragAndDropArea(area, isBatch) {
+    area.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        area.classList.add('dragover');
+    });
+    
+    area.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        area.classList.remove('dragover');
+    });
+    
+    area.addEventListener('drop', function(e) {
+        e.preventDefault();
+        area.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            if (isBatch) {
+                currentFiles = Array.from(files);
+                processBatchFiles();
+            } else {
+                currentFile = files[0];
+                processSingleFile();
+            }
+        }
+    });
+    
+    area.addEventListener('click', function() {
+        if (isBatch) {
+            document.getElementById('batchFileInput').click();
+        } else {
+            document.getElementById('singleFileInput').click();
+        }
+    });
+}
+
+function setupFileInputs() {
+    const singleInput = document.getElementById('singleFileInput');
+    singleInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            currentFile = e.target.files[0];
+            processSingleFile();
+        }
+    });
+}
+
+function processSingleFile() {
+    if (!currentFile) return;
+    
+    const formData = new FormData();
+    formData.append('file', currentFile);
+    
+    showProcessingSpinner();
+    
+    fetch('/api/ocr/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProcessingSpinner();
+        if (data.success) {
+            showResults(data);
+        } else {
+            showError(data.error || 'Processing failed');
+        }
+    })
+    .catch(error => {
+        hideProcessingSpinner();
+        showError('Network error: ' + error.message);
+    });
+}
+
+function showProcessingSpinner() {
+    document.getElementById('processingSpinner').classList.remove('d-none');
+    document.getElementById('ocrResults').classList.add('d-none');
+}
+
+function hideProcessingSpinner() {
+    document.getElementById('processingSpinner').classList.add('d-none');
+}
+
+function showResults(data) {
+    const resultsDiv = document.getElementById('ocrResults');
+    const contentDiv = document.getElementById('resultsContent');
+    
+    const confidenceClass = data.confidence > 0.8 ? 'confidence-high' : 
+                           data.confidence > 0.6 ? 'confidence-medium' : 'confidence-low';
+    
+    contentDiv.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Filename:</strong> ${data.filename}</p>
+                <p><strong>Confidence:</strong> <span class="${confidenceClass}">${(data.confidence * 100).toFixed(1)}%</span></p>
+                <p><strong>Processing Time:</strong> ${data.processing_time.toFixed(2)}s</p>
+                <p><strong>Word Count:</strong> ${data.word_count}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Character Count:</strong> ${data.char_count}</p>
+                <p><strong>Preprocessed:</strong> ${data.preprocessed ? 'Yes' : 'No'}</p>
+            </div>
+        </div>
+        <hr>
+        <h6>Extracted Text:</h6>
+        <div class="bg-white p-3 rounded border">
+            <pre class="mb-0" style="white-space: pre-wrap;">${data.text}</pre>
+        </div>
+    `;
+    
+    resultsDiv.classList.remove('d-none');
+}
+
+function showError(message) {
+    const resultsDiv = document.getElementById('ocrResults');
+    const contentDiv = document.getElementById('resultsContent');
+    
+    contentDiv.innerHTML = `
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            ${message}
+        </div>
+    `;
+    
+    resultsDiv.classList.remove('d-none');
+}
+
+function showOCRModal() {
+    const modal = new bootstrap.Modal(document.getElementById('ocrModal'));
+    modal.show();
+}
+</script>
 {% endblock %}
+
 
 

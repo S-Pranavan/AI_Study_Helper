@@ -18,10 +18,10 @@ async def test_phase5_features():
         page = await browser.new_page()
         
         try:
-            print("🚀 Starting Phase 5 Tests...")
+            print("Starting Phase 5 Tests...")
             
             # Test 1: Main Dashboard with Gamification
-            print("\n📊 Test 1: Main Dashboard with Gamification")
+            print("\nTest 1: Main Dashboard with Gamification")
             await page.goto("http://localhost:5000/")
             await page.wait_for_load_state("networkidle")
             
@@ -40,7 +40,7 @@ async def test_phase5_features():
                 print("❌ XP display not found")
             
             # Test 2: PWA and Offline Support
-            print("\n📱 Test 2: PWA and Offline Support")
+            print("\nTest 2: PWA and Offline Support")
             
             # Check for offline support section
             offline_section = await page.locator("text=Offline Support").first
@@ -57,7 +57,7 @@ async def test_phase5_features():
                 print("❌ Cache statistics not found")
             
             # Test 3: Multilingual Support
-            print("\n🌍 Test 3: Multilingual Support")
+            print("\nTest 3: Multilingual Support")
             
             # Check for multilingual section
             multilingual_section = await page.locator("text=Multilingual Support").first
@@ -74,7 +74,7 @@ async def test_phase5_features():
                 print("❌ Language detection tool not found")
             
             # Test 4: OCR Integration
-            print("\n🔍 Test 4: OCR Integration")
+            print("\nTest 4: OCR Integration")
             await page.goto("http://localhost:5000/ocr")
             await page.wait_for_load_state("networkidle")
             
@@ -86,7 +86,7 @@ async def test_phase5_features():
                 print("❌ OCR page failed to load")
             
             # Test 5: AI Generation
-            print("\n🤖 Test 5: AI Generation")
+            print("\nTest 5: AI Generation")
             await page.goto("http://localhost:5000/ai_generate")
             await page.wait_for_load_state("networkidle")
             
@@ -98,7 +98,7 @@ async def test_phase5_features():
                 print("❌ AI generation page failed to load")
             
             # Test 6: Quiz System
-            print("\n❓ Test 6: Quiz System")
+            print("\nTest 6: Quiz System")
             await page.goto("http://localhost:5000/quiz")
             await page.wait_for_load_state("networkidle")
             
@@ -110,7 +110,7 @@ async def test_phase5_features():
                 print("❌ Quiz page failed to load")
             
             # Test 7: Flashcards
-            print("\n🗂️ Test 7: Flashcards")
+            print("\nTest 7: Flashcards")
             await page.goto("http://localhost:5000/flashcards")
             await page.wait_for_load_state("networkidle")
             
@@ -122,7 +122,7 @@ async def test_phase5_features():
                 print("❌ Flashcards page failed to load")
             
             # Test 8: AI Tutor
-            print("\n👨‍🏫 Test 8: AI Tutor")
+            print("\nTest 8: AI Tutor")
             await page.goto("http://localhost:5000/ai_tutor")
             await page.wait_for_load_state("networkidle")
             
@@ -134,7 +134,7 @@ async def test_phase5_features():
                 print("❌ AI Tutor page failed to load")
             
             # Test 9: Mind Maps
-            print("\n🧠 Test 9: Mind Maps")
+            print("\nTest 9: Mind Maps")
             await page.goto("http://localhost:5000/mind_map")
             await page.wait_for_load_state("networkidle")
             
@@ -146,7 +146,7 @@ async def test_phase5_features():
                 print("❌ Mind Map page failed to load")
             
             # Test 10: API Endpoints
-            print("\n🔌 Test 10: API Endpoints")
+            print("\nTest 10: API Endpoints")
             
             # Test gamification API
             response = await page.request.get("http://localhost:5000/api/gamification/progress")
@@ -169,10 +169,10 @@ async def test_phase5_features():
             else:
                 print("❌ Multilingual API endpoint failed")
             
-            print("\n🎉 Phase 5 Tests Completed!")
+            print("\nPhase 5 Tests Completed!")
             
         except Exception as e:
-            print(f"❌ Test failed with error: {e}")
+            print(f"Test failed with error: {e}")
         
         finally:
             await browser.close()

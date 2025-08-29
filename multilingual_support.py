@@ -662,3 +662,4 @@ class MultilingualSupport:
         except Exception as e:
             print(f"Error cleaning up old translations: {e}")
             return 0
+

@@ -511,3 +511,4 @@ def generate_quiz_from_text(text_content, difficulty='medium', num_questions=5):
 *These rules ensure the AI Study Helper project maintains high quality standards while using only free, open-source resources. Follow them strictly to deliver a competition-ready product.*
 
 
+

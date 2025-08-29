@@ -633,3 +633,4 @@ class PWAOfflineSupport:
         except Exception as e:
             print(f"Error importing offline data: {e}")
             return False
+

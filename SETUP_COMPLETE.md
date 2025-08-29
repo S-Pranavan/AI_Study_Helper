@@ -132,3 +132,4 @@ Your AI Study Helper is now ready to help you:
 **Need Help?** Check the `README.md` file for detailed documentation!
 
 
+

@@ -162,11 +162,11 @@ class TestPhase1OCR:
         page.mouse.up()
         
         # Check that drag over class is applied
-        expect(single_upload).to_have_class(/dragover/)
+        expect(single_upload).to_have_class("dragover")
         
         # Move mouse away to remove drag over effect
         page.mouse.move(0, 0)
-        expect(single_upload).not_to_have_class(/dragover/)
+        expect(single_upload).not_to_have_class("dragover")
         
         print("✅ Drag and drop functionality works correctly")
     

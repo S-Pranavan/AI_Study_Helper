@@ -408,7 +408,7 @@ class TestPhase4AITutor:
 
 def run_phase4_tests():
     """Run all Phase 4 tests and return results"""
-    print("🧪 Running Phase 4: AI Tutor & Mind Maps Tests")
+    print("Running Phase 4: AI Tutor & Mind Maps Tests")
     print("=" * 60)
     
     passed = 0
@@ -448,17 +448,17 @@ def run_phase4_tests():
                 # Run the test
                 test_method(page)
                 passed += 1
-                print(f"✅ {test_method.__name__}")
+                print(f"PASSED: {test_method.__name__}")
                 
                 context.close()
                 browser.close()
                 
         except Exception as e:
             failed += 1
-            print(f"❌ {test_method.__name__}: {str(e)}")
+            print(f"FAILED: {test_method.__name__}: {str(e)}")
     
     print("\n" + "=" * 60)
-    print(f"📊 PHASE 4 TEST RESULTS: {passed} passed, {failed} failed")
+    print(f"PHASE 4 TEST RESULTS: {passed} passed, {failed} failed")
     print("=" * 60)
     
     return passed, failed
