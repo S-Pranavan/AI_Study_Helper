@@ -96,7 +96,7 @@
 
                 <!-- Single File Upload -->
                 <div class="mb-4">
-                    <h6><i class="fas fa-image me-2"></i>Image Upload & Processing</h6>
+                    <h6><i class="fas fa-image me-2"></i>Single Image Upload</h6>
                     <div class="upload-area border-2 border-dashed border-primary rounded p-4 text-center" id="singleUploadArea">
                         <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-3"></i>
                         <h6>Drag & Drop Image Here</h6>
@@ -105,6 +105,21 @@
                         <input type="file" id="singleFileInput" accept="image/*" class="d-none">
                         <button class="btn btn-primary btn-sm" onclick="document.getElementById('singleFileInput').click()">
                             <i class="fas fa-folder-open me-2"></i>Choose Image
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Batch File Upload -->
+                <div class="mb-4">
+                    <h6><i class="fas fa-images me-2"></i>Batch Image Upload</h6>
+                    <div class="upload-area border-2 border-dashed border-success rounded p-4 text-center" id="batchUploadArea">
+                        <i class="fas fa-cloud-upload-alt fa-2x text-success mb-3"></i>
+                        <h6>Drag & Drop Multiple Images Here</h6>
+                        <p class="text-muted small">or click to browse multiple files</p>
+                        <p class="text-muted small">Supports: PNG, JPG, GIF, BMP, TIFF, WEBP</p>
+                        <input type="file" id="batchFileInput" accept="image/*" multiple class="d-none">
+                        <button class="btn btn-success btn-sm" onclick="document.getElementById('batchFileInput').click()">
+                            <i class="fas fa-folder-open me-2"></i>Choose Multiple Images
                         </button>
                     </div>
                 </div>
@@ -228,6 +243,18 @@
     background-color: #e9ecef;
     transform: scale(1.02);
 }
+
+#batchUploadArea {
+    border-color: #28a745;
+}
+#batchUploadArea:hover {
+    border-color: #218838;
+    background-color: #e9ecef;
+}
+#batchUploadArea.dragover {
+    border-color: #218838;
+    background-color: #e9ecef;
+}
 .confidence-high { color: #28a745; }
 .confidence-medium { color: #ffc107; }
 .confidence-low { color: #dc3545; }
@@ -242,6 +269,7 @@
 <script>
 // Global variables
 let currentFile = null;
+let currentFiles = [];
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
@@ -252,7 +280,9 @@ document.addEventListener('DOMContentLoaded', function() {
 // Setup drag and drop functionality
 function setupDragAndDrop() {
     const singleArea = document.getElementById('singleUploadArea');
+    const batchArea = document.getElementById('batchUploadArea');
     setupDragAndDropArea(singleArea, false);
+    setupDragAndDropArea(batchArea, true);
 }
 
 function setupDragAndDropArea(area, isBatch) {
@@ -291,12 +321,110 @@ function setupDragAndDropArea(area, isBatch) {
     });
 }
 
+function processBatchFiles() {
+    if (!currentFiles || currentFiles.length === 0) return;
+    
+    showProcessingSpinner();
+    
+    const formData = new FormData();
+    currentFiles.forEach((file, index) => {
+        formData.append('files', file);
+    });
+    
+    fetch('/api/ocr/batch', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProcessingSpinner();
+        if (data.success) {
+            showBatchResults(data);
+        } else {
+            showError(data.error || 'Batch processing failed');
+        }
+    })
+    .catch(error => {
+        hideProcessingSpinner();
+        showError('Network error: ' + error.message);
+    });
+}
+
+function showBatchResults(data) {
+    const resultsDiv = document.getElementById('ocrResults');
+    const contentDiv = document.getElementById('resultsContent');
+    const classificationDiv = document.getElementById('contentClassification');
+    const suggestionsDiv = document.getElementById('suggestionsContent');
+    
+    // Show batch summary
+    classificationDiv.innerHTML = `
+        <div class="col-12">
+            <div class="alert alert-success">
+                <strong>Batch Processing Complete!</strong> 
+                <span class="content-badge bg-success text-white">${data.results ? data.results.length : 0} files processed</span>
+            </div>
+        </div>
+    `;
+    
+    // Show batch results
+    let resultsHtml = '<h6>Batch Results:</h6>';
+    if (data.results && data.results.length > 0) {
+        data.results.forEach((result, index) => {
+            const confidenceClass = result.confidence > 0.8 ? 'confidence-high' : 
+                                   result.confidence > 0.6 ? 'confidence-medium' : 'confidence-low';
+            
+            resultsHtml += `
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <strong>File ${index + 1}:</strong> ${result.filename || 'Unknown'}
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Confidence:</strong> <span class="${confidenceClass}">${(result.confidence * 100).toFixed(1)}%</span></p>
+                                <p><strong>Word Count:</strong> ${result.word_count || 0}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Content Type:</strong> ${result.content_type ? result.content_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown'}</p>
+                                <p><strong>Processing Time:</strong> ${result.processing_time ? result.processing_time.toFixed(2) + 's' : 'N/A'}</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <h6>Extracted Text:</h6>
+                        <div class="bg-white p-3 rounded border">
+                            <pre class="mb-0" style="white-space: pre-wrap;">${result.text || 'No text extracted'}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        resultsHtml += '<p class="text-muted">No results available.</p>';
+    }
+    
+    contentDiv.innerHTML = resultsHtml;
+    
+    // Hide study suggestions for batch processing
+    suggestionsDiv.classList.add('d-none');
+    
+    resultsDiv.classList.remove('d-none');
+}
+
 function setupFileInputs() {
     const singleInput = document.getElementById('singleFileInput');
+    const batchInput = document.getElementById('batchFileInput');
+    
     singleInput.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
             currentFile = e.target.files[0];
             processSingleFile();
+        }
+    });
+    
+    batchInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            currentFiles = Array.from(e.target.files);
+            processBatchFiles();
         }
     });
 }

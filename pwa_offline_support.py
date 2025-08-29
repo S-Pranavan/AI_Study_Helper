@@ -635,3 +635,4 @@ class PWAOfflineSupport:
             return False
 
 
+
