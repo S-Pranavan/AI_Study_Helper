@@ -1,0 +1,40 @@
+# Phase 3: Quiz & Flashcard System Requirements
+# Building upon Phase 1 (OCR) and Phase 2 (AI Content Generation)
+
+# Core Flask and web framework
+Flask==2.3.3
+Werkzeug==2.3.7
+
+# Database
+sqlite3
+
+# Image processing (Phase 1)
+opencv-python==4.8.1.78
+pytesseract==0.3.10
+Pillow==10.0.1
+numpy==1.24.3
+
+# AI Models (Phase 2)
+transformers==4.35.0
+torch==2.1.0
+sentence-transformers==2.2.2
+accelerate==0.24.1
+
+# Additional dependencies for Phase 3
+# These are built-in Python modules, no pip install needed:
+# - re (regex)
+# - random
+# - json
+# - datetime
+# - typing
+# - dataclasses
+# - logging
+
+# Development and testing
+pytest==7.4.3
+playwright==1.40.0
+pytest-playwright==0.4.2
+
+# Optional: For better text processing
+nltk==3.8.1
+textblob==0.17.1

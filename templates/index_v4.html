@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Helper - Phase 4: Quiz & Flashcard System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .navbar-brand { font-weight: bold; color: #6c5ce7 !important; }
+        .card { border: none; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-2px); }
+        .btn-primary { background-color: #6c5ce7; border-color: #6c5ce7; }
+        .btn-primary:hover { background-color: #5f4dd0; border-color: #5f4dd0; }
+        .upload-area { border: 2px dashed #6c5ce7; border-radius: 10px; padding: 2rem; text-align: center; transition: all 0.3s ease; background-color: #f8f9fa; }
+        .upload-area:hover { border-color: #5f4dd0; background-color: #e9ecef; }
+        .upload-area.dragover { border-color: #5f4dd0; background-color: #e9ecef; transform: scale(1.02); }
+        .confidence-high { color: #28a745; }
+        .confidence-medium { color: #ffc107; }
+        .confidence-low { color: #dc3545; }
+        .processing-spinner { display: none; }
+        .result-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .quiz-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+        .flashcard-card { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
+        .question-option { cursor: pointer; padding: 10px; margin: 5px 0; border-radius: 5px; transition: all 0.3s; }
+        .question-option:hover { background-color: rgba(255, 255, 255, 0.2); }
+        .question-option.selected { background-color: rgba(255, 255, 255, 0.3); border: 2px solid white; }
+        .question-option.correct { background-color: rgba(40, 167, 69, 0.7); }
+        .question-option.incorrect { background-color: rgba(220, 53, 69, 0.7); }
+        .flashcard { perspective: 1000px; height: 300px; }
+        .flashcard-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.8s; transform-style: preserve-3d; }
+        .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+        .flashcard-front, .flashcard-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 20px; border-radius: 10px; }
+        .flashcard-back { transform: rotateY(180deg); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .quality-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .quality-btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; transition: all 0.3s; }
+        .quality-btn:hover { transform: scale(1.1); }
+        .quality-1 { background-color: #dc3545; color: white; }
+        .quality-2 { background-color: #fd7e14; color: white; }
+        .quality-3 { background-color: #ffc107; color: black; }
+        .quality-4 { background-color: #28a745; color: white; }
+        .quality-5 { background-color: #20c997; color: white; }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-brain me-2"></i>AI Study Helper - Phase 4
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text">
+                    <i class="fas fa-question-circle me-1"></i>Quiz & Flashcard System
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <!-- Phase Indicator -->
+        <div class="phase-indicator text-center mb-4">
+            <h1 class="mb-2"><i class="fas fa-brain"></i> AI Study Helper</h1>
+            <p class="mb-0">Phase 4: Quiz & Flashcard System - Complete Learning Pipeline</p>
+            <div class="mt-2">
+                <span class="badge bg-success me-2"><i class="fas fa-check"></i> OCR Foundation</span>
+                <span class="badge bg-success me-2"><i class="fas fa-check"></i> AI Content Generation</span>
+                <span class="badge bg-primary me-2"><i class="fas fa-star"></i> Quiz System</span>
+                <span class="badge bg-primary me-2"><i class="fas fa-star"></i> Flashcard System</span>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column: Upload & Processing -->
+            <div class="col-lg-6">
+                <!-- AI Model Status -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-robot"></i> AI Model Status</h5>
+                    </div>
+                    <div class="card-body" id="aiStatus">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2">Loading AI model status...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Upload Area -->
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-upload"></i> Upload Image for OCR + AI + Quiz Generation</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-area" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                            <h5>Drag & Drop Image Here</h5>
+                            <p class="text-muted">or click to browse</p>
+                            <input type="file" id="fileInput" accept="image/*" class="d-none">
+                            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-folder-open me-2"></i>Choose Image
+                            </button>
+                        </div>
+                        <div id="processingProgress" class="mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Text Input for Direct AI Generation -->
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-keyboard"></i> Direct Text Input for AI + Quiz Generation</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control mb-3" id="textInput" rows="4" placeholder="Enter text content here..."></textarea>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Subject:</label>
+                                <input type="text" class="form-control" id="subjectInput" value="General">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Difficulty:</label>
+                                <select class="form-select" id="difficultyInput">
+                                    <option value="easy">Easy</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="hard">Hard</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-success me-2" onclick="generateFromText()">
+                                <i class="fas fa-magic me-2"></i>Generate AI Content
+                            </button>
+                            <button class="btn btn-warning me-2" onclick="generateQuizFromText()">
+                                <i class="fas fa-question-circle me-2"></i>Generate Quiz
+                            </button>
+                            <button class="btn btn-info" onclick="generateFlashcardsFromText()">
+                                <i class="fas fa-layer-group me-2"></i>Generate Flashcards
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Results & Study Tools -->
+            <div class="col-lg-6">
+                <!-- OCR Results -->
+                <div class="card mb-3" id="ocrResultsCard" style="display: none;">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-file-text"></i> OCR Results</h5>
+                    </div>
+                    <div class="card-body" id="ocrResults"></div>
+                </div>
+
+                <!-- AI Generated Content -->
+                <div class="card mb-3" id="aiContentSection" style="display: none;">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-magic"></i> AI Generated Content</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="aiContent"></div>
+                    </div>
+                </div>
+
+                <!-- Quiz Section -->
+                <div class="card mb-3" id="quizSection" style="display: none;">
+                    <div class="card-header quiz-card">
+                        <h5><i class="fas fa-question-circle"></i> Generated Quiz</h5>
+                    </div>
+                    <div class="card-body" id="quizContent"></div>
+                </div>
+
+                <!-- Flashcard Section -->
+                <div class="card mb-3" id="flashcardSection" style="display: none;">
+                    <div class="card-header flashcard-card">
+                        <h5><i class="fas fa-layer-group"></i> Generated Flashcards</h5>
+                    </div>
+                    <div class="card-body" id="flashcardContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Taking Interface -->
+        <div class="row mt-4" id="quizTakingSection" style="display: none;">
+            <div class="col-12">
+                <div class="card quiz-card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-play-circle"></i> Take Quiz</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="quizTakingContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flashcard Review Interface -->
+        <div class="row mt-4" id="flashcardReviewSection" style="display: none;">
+            <div class="col-12">
+                <div class="card flashcard-card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-sync-alt"></i> Flashcard Review</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="flashcardReviewContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Dashboard -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-chart-bar"></i> Quiz Statistics</h5>
+                    </div>
+                    <div class="card-body" id="quizStats">
+                        <div class="text-center">
+                            <div class="spinner-border text-success" role="status"></div>
+                            <p class="mt-2">Loading quiz statistics...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-chart-line"></i> Flashcard Statistics</h5>
+                    </div>
+                    <div class="card-body" id="flashcardStats">
+                        <div class="text-center">
+                            <div class="spinner-border text-info" role="status"></div>
+                            <p class="mt-2">Loading flashcard statistics...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let currentFile = null;
+        let currentQuiz = null;
+        let currentFlashcards = [];
+        let currentQuestionIndex = 0;
+        let quizAnswers = [];
+        let quizScore = 0;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAIStatus();
+            loadStatistics();
+            setupDragAndDrop();
+            setupFileInput();
+        });
+
+        // Setup drag and drop functionality
+        function setupDragAndDrop() {
+            const uploadArea = document.getElementById('uploadArea');
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+        }
+
+        function setupFileInput() {
+            document.getElementById('fileInput').addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+        }
+
+        function handleFile(file) {
+            if (!file) return;
+            
+            if (!validateFile(file)) return;
+            
+            currentFile = file;
+            uploadAndProcess(file);
+        }
+
+        function validateFile(file) {
+            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/bmp', 'image/tiff'];
+            const maxSize = 16 * 1024 * 1024; // 16MB
+            
+            if (!allowedTypes.includes(file.type)) {
+                showAlert('Invalid file type. Please upload an image file.', 'danger');
+                return false;
+            }
+            
+            if (file.size > maxSize) {
+                showAlert('File too large. Maximum size is 16MB.', 'danger');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function uploadAndProcess(file) {
+            showProcessingProgress(true);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch('/api/ocr/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                showProcessingProgress(false);
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    showAlert(data.error || 'Processing failed', 'danger');
+                }
+            })
+            .catch(error => {
+                showProcessingProgress(false);
+                showAlert('Error processing file: ' + error.message, 'danger');
+            });
+        }
+
+        function displayResults(data) {
+            // Display OCR results
+            const ocrResultsCard = document.getElementById('ocrResultsCard');
+            const ocrResults = document.getElementById('ocrResults');
+            
+            ocrResults.innerHTML = `
+                <div class="mb-3">
+                    <h6><i class="fas fa-file-text me-2"></i>Extracted Text</h6>
+                    <div class="bg-light p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                        <pre class="mb-0">${data.extracted_text || 'No text extracted'}</pre>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small><strong>Processing Time:</strong> ${data.processing_time.toFixed(2)}s</small>
+                    </div>
+                    <div class="col-md-6">
+                        <small><strong>File Size:</strong> ${(data.file_size / 1024).toFixed(1)} KB</small>
+                    </div>
+                </div>
+            `;
+            ocrResultsCard.style.display = 'block';
+
+            // Display AI content if available
+            if (data.ai_content) {
+                displayAIContent(data.ai_content);
+            }
+
+            // Generate quiz and flashcards automatically
+            generateQuizFromContent(data.extracted_text);
+            generateFlashcardsFromContent(data.extracted_text);
+        }
+
+        function displayAIContent(content) {
+            const aiContentSection = document.getElementById('aiContentSection');
+            const aiContent = document.getElementById('aiContent');
+            
+            let contentHtml = '';
+            
+            if (content.summary) {
+                contentHtml += `
+                    <div class="mb-3">
+                        <h6><i class="fas fa-compress-alt me-2"></i>Summary</h6>
+                        <p class="mb-0">${content.summary.text}</p>
+                    </div>
+                `;
+            }
+            
+            if (content.explanation) {
+                contentHtml += `
+                    <div class="mb-3">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Explanation</h6>
+                        <p class="mb-0">${content.explanation.text}</p>
+                    </div>
+                `;
+            }
+            
+            if (content.keywords) {
+                contentHtml += `
+                    <div class="mb-3">
+                        <h6><i class="fas fa-tags me-2"></i>Keywords</h6>
+                        <div class="d-flex flex-wrap gap-1">
+                            ${content.keywords.text.map(keyword => 
+                                `<span class="badge bg-secondary">${keyword}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            aiContent.innerHTML = contentHtml;
+            aiContentSection.style.display = 'block';
+        }
+
+        function generateFromText() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) {
+                showAlert('Please enter some text first.', 'warning');
+                return;
+            }
+
+            const contentTypes = ['summary', 'explanation', 'keywords'];
+            
+            fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, content_types: contentTypes })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayAIContent(data.content);
+                    showAlert('AI content generated successfully!', 'success');
+                } else {
+                    showAlert(data.error || 'AI generation failed', 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Error generating AI content: ' + error.message, 'danger');
+            });
+        }
+
+        function generateQuizFromText() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) {
+                showAlert('Please enter some text first.', 'warning');
+                return;
+            }
+
+            const subject = document.getElementById('subjectInput').value;
+            const difficulty = document.getElementById('difficultyInput').value;
+            
+            fetch('/api/quiz/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    content: text, 
+                    subject: subject, 
+                    difficulty: difficulty,
+                    question_count: 5,
+                    question_types: ['multiple_choice', 'short_answer', 'true_false']
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentQuiz = data.quiz;
+                    displayQuiz(data.quiz);
+                    showAlert('Quiz generated successfully!', 'success');
+                } else {
+                    showAlert(data.error || 'Quiz generation failed', 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Error generating quiz: ' + error.message, 'danger');
+            });
+        }
+
+        function generateQuizFromContent(content) {
+            const subject = document.getElementById('subjectInput').value;
+            const difficulty = document.getElementById('difficultyInput').value;
+            
+            fetch('/api/quiz/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    content: content, 
+                    subject: subject, 
+                    difficulty: difficulty,
+                    question_count: 5,
+                    question_types: ['multiple_choice', 'short_answer', 'true_false']
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentQuiz = data.quiz;
+                    displayQuiz(data.quiz);
+                }
+            })
+            .catch(error => {
+                console.error('Error generating quiz:', error);
+            });
+        }
+
+        function generateFlashcardsFromText() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) {
+                showAlert('Please enter some text first.', 'warning');
+                return;
+            }
+
+            const subject = document.getElementById('subjectInput').value;
+            const difficulty = document.getElementById('difficultyInput').value;
+            
+            fetch('/api/flashcards/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    content: text, 
+                    subject: subject, 
+                    difficulty: difficulty,
+                    card_count: 5
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentFlashcards = data.flashcards;
+                    displayFlashcards(data.flashcards);
+                    showAlert('Flashcards generated successfully!', 'success');
+                } else {
+                    showAlert(data.error || 'Flashcard generation failed', 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Error generating flashcards: ' + error.message, 'danger');
+            });
+        }
+
+        function generateFlashcardsFromContent(content) {
+            const subject = document.getElementById('subjectInput').value;
+            const difficulty = document.getElementById('difficultyInput').value;
+            
+            fetch('/api/flashcards/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    content: content, 
+                    subject: subject, 
+                    difficulty: difficulty,
+                    card_count: 5
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentFlashcards = data.flashcards;
+                    displayFlashcards(data.flashcards);
+                }
+            })
+            .catch(error => {
+                console.error('Error generating flashcards:', error);
+            });
+        }
+
+        function displayQuiz(quiz) {
+            const quizSection = document.getElementById('quizSection');
+            const quizContent = document.getElementById('quizContent');
+            
+            let quizHtml = `
+                <div class="mb-3">
+                    <h6>Generated ${quiz.length} questions</h6>
+                    <button class="btn btn-primary" onclick="startQuiz()">
+                        <i class="fas fa-play me-2"></i>Start Quiz
+                    </button>
+                </div>
+                <div class="row">
+            `;
+            
+            quiz.forEach((question, index) => {
+                quizHtml += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Question ${index + 1}</h6>
+                                <p class="mb-2">${question.question_text}</p>
+                                <small class="text-muted">Type: ${question.question_type} | Difficulty: ${question.difficulty}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            quizHtml += '</div>';
+            quizContent.innerHTML = quizHtml;
+            quizSection.style.display = 'block';
+        }
+
+        function displayFlashcards(flashcards) {
+            const flashcardSection = document.getElementById('flashcardSection');
+            const flashcardContent = document.getElementById('flashcardContent');
+            
+            let flashcardHtml = `
+                <div class="mb-3">
+                    <h6>Generated ${flashcards.length} flashcards</h6>
+                    <button class="btn btn-info" onclick="startFlashcardReview()">
+                        <i class="fas fa-sync-alt me-2"></i>Start Review
+                    </button>
+                </div>
+                <div class="row">
+            `;
+            
+            flashcards.forEach((flashcard, index) => {
+                flashcardHtml += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>Flashcard ${index + 1}</h6>
+                                <p class="mb-2"><strong>Front:</strong> ${flashcard.front_content}</p>
+                                <p class="mb-2"><strong>Back:</strong> ${flashcard.back_content}</p>
+                                <small class="text-muted">Difficulty: ${flashcard.difficulty}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            flashcardHtml += '</div>';
+            flashcardContent.innerHTML = flashcardHtml;
+            flashcardSection.style.display = 'block';
+        }
+
+        function startQuiz() {
+            if (!currentQuiz || currentQuiz.length === 0) {
+                showAlert('No quiz available to start.', 'warning');
+                return;
+            }
+
+            currentQuestionIndex = 0;
+            quizAnswers = [];
+            quizScore = 0;
+
+            const quizTakingSection = document.getElementById('quizTakingSection');
+            quizTakingSection.style.display = 'block';
+            
+            displayCurrentQuestion();
+        }
+
+        function displayCurrentQuestion() {
+            if (currentQuestionIndex >= currentQuiz.length) {
+                finishQuiz();
+                return;
+            }
+
+            const question = currentQuiz[currentQuestionIndex];
+            const quizTakingContent = document.getElementById('quizTakingContent');
+            
+            let questionHtml = `
+                <div class="text-center mb-3">
+                    <h5>Question ${currentQuestionIndex + 1} of ${currentQuiz.length}</h5>
+                    <div class="progress mb-3">
+                        <div class="progress-bar" style="width: ${((currentQuestionIndex + 1) / currentQuiz.length) * 100}%"></div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <h6>${question.question_text}</h6>
+                    <small class="text-muted">Type: ${question.question_type} | Difficulty: ${question.difficulty}</small>
+                </div>
+            `;
+
+            if (question.question_type === 'multiple_choice' && question.options) {
+                question.options.forEach((option, index) => {
+                    questionHtml += `
+                        <div class="question-option" onclick="selectOption(${index})" id="option-${index}">
+                            ${String.fromCharCode(65 + index)}. ${option}
+                        </div>
+                    `;
+                });
+            } else if (question.question_type === 'true_false') {
+                questionHtml += `
+                    <div class="question-option" onclick="selectOption(0)" id="option-0">True</div>
+                    <div class="question-option" onclick="selectOption(1)" id="option-1">False</div>
+                `;
+            } else {
+                questionHtml += `
+                    <div class="mb-3">
+                        <label class="form-label">Your Answer:</label>
+                        <input type="text" class="form-control" id="shortAnswerInput" placeholder="Enter your answer...">
+                    </div>
+                `;
+            }
+
+            questionHtml += `
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary" onclick="submitAnswer()">
+                        <i class="fas fa-arrow-right me-2"></i>Submit Answer
+                    </button>
+                </div>
+            `;
+
+            quizTakingContent.innerHTML = questionHtml;
+        }
+
+        function selectOption(optionIndex) {
+            // Remove previous selections
+            document.querySelectorAll('.question-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select current option
+            document.getElementById(`option-${optionIndex}`).classList.add('selected');
+        }
+
+        function submitAnswer() {
+            const question = currentQuiz[currentQuestionIndex];
+            let userAnswer = '';
+            let isCorrect = false;
+
+            if (question.question_type === 'multiple_choice' || question.question_type === 'true_false') {
+                const selectedOption = document.querySelector('.question-option.selected');
+                if (!selectedOption) {
+                    showAlert('Please select an answer.', 'warning');
+                    return;
+                }
+                
+                const optionIndex = parseInt(selectedOption.id.split('-')[1]);
+                userAnswer = question.options[optionIndex];
+                isCorrect = userAnswer === question.correct_answer;
+            } else {
+                userAnswer = document.getElementById('shortAnswerInput').value.trim();
+                if (!userAnswer) {
+                    showAlert('Please enter your answer.', 'warning');
+                    return;
+                }
+                
+                // Simple exact match for short answer
+                isCorrect = userAnswer.toLowerCase() === question.correct_answer.toLowerCase();
+            }
+
+            // Store answer
+            quizAnswers.push({
+                question: question,
+                userAnswer: userAnswer,
+                isCorrect: isCorrect
+            });
+
+            if (isCorrect) quizScore++;
+
+            // Show result briefly
+            showAnswerResult(isCorrect, question);
+
+            // Move to next question after delay
+            setTimeout(() => {
+                currentQuestionIndex++;
+                displayCurrentQuestion();
+            }, 2000);
+        }
+
+        function showAnswerResult(isCorrect, question) {
+            const quizTakingContent = document.getElementById('quizTakingContent');
+            
+            let resultHtml = `
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-${isCorrect ? 'check-circle text-success' : 'times-circle text-danger'} fa-3x"></i>
+                    </div>
+                    <h5 class="text-${isCorrect ? 'success' : 'danger'}">
+                        ${isCorrect ? 'Correct!' : 'Incorrect!'}
+                    </h5>
+                    <div class="mb-3">
+                        <strong>Your Answer:</strong> ${quizAnswers[quizAnswers.length - 1].userAnswer}<br>
+                        <strong>Correct Answer:</strong> ${question.correct_answer}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Explanation:</strong><br>
+                        ${question.explanation}
+                    </div>
+                    <p class="text-muted">Moving to next question...</p>
+                </div>
+            `;
+            
+            quizTakingContent.innerHTML = resultHtml;
+        }
+
+        function finishQuiz() {
+            const percentage = (quizScore / currentQuiz.length) * 100;
+            const quizTakingContent = document.getElementById('quizTakingContent');
+            
+            let resultHtml = `
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-trophy fa-3x text-warning"></i>
+                    </div>
+                    <h4>Quiz Complete!</h4>
+                    <div class="mb-3">
+                        <h2 class="text-${percentage >= 70 ? 'success' : percentage >= 50 ? 'warning' : 'danger'}">
+                            ${quizScore}/${currentQuiz.length} (${percentage.toFixed(1)}%)
+                        </h2>
+                    </div>
+                    <div class="mb-3">
+                        <button class="btn btn-primary me-2" onclick="submitQuizResults()">
+                            <i class="fas fa-save me-2"></i>Save Results
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetQuiz()">
+                            <i class="fas fa-redo me-2"></i>Try Again
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            quizTakingContent.innerHTML = resultHtml;
+        }
+
+        function submitQuizResults() {
+            const sessionName = `Quiz Session ${new Date().toLocaleDateString()}`;
+            const subject = document.getElementById('subjectInput').value;
+            const difficulty = document.getElementById('difficultyInput').value;
+            
+            fetch('/api/quiz/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_name: sessionName,
+                    subject: subject,
+                    difficulty: difficulty,
+                    score: quizScore,
+                    total_questions: currentQuiz.length
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Quiz results saved successfully!', 'success');
+                    loadStatistics(); // Refresh statistics
+                } else {
+                    showAlert(data.error || 'Failed to save results', 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Error saving quiz results: ' + error.message, 'danger');
+            });
+        }
+
+        function resetQuiz() {
+            currentQuestionIndex = 0;
+            quizAnswers = [];
+            quizScore = 0;
+            displayCurrentQuestion();
+        }
+
+        function startFlashcardReview() {
+            if (!currentFlashcards || currentFlashcards.length === 0) {
+                showAlert('No flashcards available for review.', 'warning');
+                return;
+            }
+
+            const flashcardReviewSection = document.getElementById('flashcardReviewSection');
+            flashcardReviewSection.style.display = 'block';
+            
+            displayCurrentFlashcard();
+        }
+
+        function displayCurrentFlashcard() {
+            if (currentQuestionIndex >= currentFlashcards.length) {
+                finishFlashcardReview();
+                return;
+            }
+
+            const flashcard = currentFlashcards[currentQuestionIndex];
+            const flashcardReviewContent = document.getElementById('flashcardReviewContent');
+            
+            let flashcardHtml = `
+                <div class="text-center mb-3">
+                    <h5>Flashcard ${currentQuestionIndex + 1} of ${currentFlashcards.length}</h5>
+                    <div class="progress mb-3">
+                        <div class="progress-bar" style="width: ${((currentQuestionIndex + 1) / currentFlashcards.length) * 100}%"></div>
+                    </div>
+                </div>
+                <div class="flashcard" id="currentFlashcard">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front bg-primary text-white">
+                            <h5>${flashcard.front_content}</h5>
+                            <p class="mt-3">
+                                <small>Click to reveal answer</small>
+                            </p>
+                        </div>
+                        <div class="flashcard-back">
+                            <h5>${flashcard.back_content}</h5>
+                            <p class="mt-3">
+                                <small>How well did you know this?</small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-primary" onclick="flipFlashcard()">
+                        <i class="fas fa-eye me-2"></i>Reveal Answer
+                    </button>
+                </div>
+                <div id="qualityButtons" class="mt-3" style="display: none;">
+                    <div class="quality-buttons">
+                        <button class="quality-btn quality-1" onclick="rateQuality(1)">1</button>
+                        <button class="quality-btn quality-2" onclick="rateQuality(2)">2</button>
+                        <button class="quality-btn quality-3" onclick="rateQuality(3)">3</button>
+                        <button class="quality-btn quality-4" onclick="rateQuality(4)">4</button>
+                        <button class="quality-btn quality-5" onclick="rateQuality(5)">5</button>
+                    </div>
+                    <p class="text-center mt-2">
+                        <small>1 = Complete blackout, 5 = Perfect response</small>
+                    </p>
+                </div>
+            `;
+            
+            flashcardReviewContent.innerHTML = flashcardHtml;
+        }
+
+        function flipFlashcard() {
+            const flashcard = document.getElementById('currentFlashcard');
+            flashcard.classList.add('flipped');
+            
+            // Show quality buttons after flip
+            setTimeout(() => {
+                document.getElementById('qualityButtons').style.display = 'block';
+            }, 500);
+        }
+
+        function rateQuality(quality) {
+            // Record the review (in a real app, you'd send this to the backend)
+            console.log(`Flashcard ${currentQuestionIndex + 1} rated with quality: ${quality}`);
+            
+            // Move to next flashcard
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentFlashcards.length) {
+                displayCurrentFlashcard();
+            } else {
+                finishFlashcardReview();
+            }
+        }
+
+        function finishFlashcardReview() {
+            const flashcardReviewContent = document.getElementById('flashcardReviewContent');
+            
+            let resultHtml = `
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-check-circle fa-3x text-success"></i>
+                    </div>
+                    <h4>Review Complete!</h4>
+                    <p class="mb-3">You've reviewed all ${currentFlashcards.length} flashcards.</p>
+                    <button class="btn btn-primary" onclick="resetFlashcardReview()">
+                        <i class="fas fa-redo me-2"></i>Review Again
+                    </button>
+                </div>
+            `;
+            
+            flashcardReviewContent.innerHTML = resultHtml;
+        }
+
+        function resetFlashcardReview() {
+            currentQuestionIndex = 0;
+            displayCurrentFlashcard();
+        }
+
+        function loadAIStatus() {
+            fetch('/api/ai/models')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const aiStatus = document.getElementById('aiStatus');
+                        let statusHtml = '';
+                        
+                        Object.entries(data.models).forEach(([model, status]) => {
+                            statusHtml += `
+                                <div class="mb-2">
+                                    <strong>${model}:</strong> 
+                                    <span class="badge bg-${status ? 'success' : 'danger'}">
+                                        ${status ? 'Ready' : 'Not Available'}
+                                    </span>
+                                </div>
+                            `;
+                        });
+                        
+                        aiStatus.innerHTML = statusHtml;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('aiStatus').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Failed to load AI model status
+                        </div>
+                    `;
+                });
+        }
+
+        function loadStatistics() {
+            // Load quiz statistics
+            fetch('/api/quiz/statistics')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const stats = data.statistics;
+                        const quizStats = document.getElementById('quizStats');
+                        
+                        quizStats.innerHTML = `
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="h4 text-success">${stats.total_sessions}</div>
+                                    <small>Total Sessions</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 text-primary">${stats.average_score}%</div>
+                                    <small>Average Score</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 text-info">${stats.total_questions}</div>
+                                    <small>Total Questions</small>
+                                </div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading quiz statistics:', error);
+                });
+
+            // Load flashcard statistics
+            fetch('/api/flashcards/statistics')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const stats = data.statistics;
+                        const flashcardStats = document.getElementById('flashcardStats');
+                        
+                        flashcardStats.innerHTML = `
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="h4 text-info">${stats.total_cards}</div>
+                                    <small>Total Cards</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 text-warning">${stats.cards_due_review}</div>
+                                    <small>Due Review</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 text-success">${stats.average_ease_factor}</div>
+                                    <small>Avg Ease</small>
+                                </div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading flashcard statistics:', error);
+                });
+        }
+
+        function showProcessingProgress(show) {
+            const progress = document.getElementById('processingProgress');
+            if (show) {
+                progress.innerHTML = `
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 text-muted">Processing image with OCR and AI...</p>
+                    </div>
+                `;
+                progress.style.display = 'block';
+            } else {
+                progress.style.display = 'none';
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.container-fluid');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

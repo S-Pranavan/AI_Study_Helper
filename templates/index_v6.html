@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Helper - Phase 5: Gamification & Offline Support</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js for gamification charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        .xp-bar {
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+            height: 20px;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .xp-progress {
+            background: rgba(255, 255, 255, 0.3);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .badge-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .achievement-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .leaderboard-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .offline-card {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .multilingual-card {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .level-indicator {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .xp-indicator {
+            font-size: 1.2rem;
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+        
+        .activity-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .language-flag {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+        
+        .offline-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .offline-indicator.offline {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <!-- Offline Status Indicator -->
+    <div id="offlineIndicator" class="offline-indicator">
+        <i class="fas fa-wifi"></i> <span id="offlineText">Online</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-brain"></i> AI Study Helper v6
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#gamification">Gamification</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#offline">Offline</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#multilingual">Languages</a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-globe"></i> Language
+                        </a>
+                        <ul class="dropdown-menu" id="languageMenu">
+                            <!-- Languages will be populated dynamically -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- User Progress Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="level-indicator">Level {{ user_progress.level }}</div>
+                        <div class="xp-indicator">{{ user_progress.xp }} XP</div>
+                        <div class="xp-bar mt-3">
+                            <div class="xp-progress" style="width: {{ (user_progress.xp % 100) }}%"></div>
+                        </div>
+                        <small class="text-muted">{{ user_progress.xp_to_next_level }} XP to next level</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard">
+            <h2 class="mb-4"><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+            
+            <div class="row">
+                <!-- Gamification Stats -->
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="feature-card text-center">
+                        <i class="fas fa-trophy fa-3x text-warning mb-3"></i>
+                        <h5>Badges Earned</h5>
+                        <h3 class="text-primary">{{ user_progress.badges_count }}</h3>
+                        <small class="text-muted">Total: {{ user_progress.total_achievements }}</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="feature-card text-center">
+                        <i class="fas fa-star fa-3x text-success mb-3"></i>
+                        <h5>Achievements</h5>
+                        <h3 class="text-primary">{{ user_progress.achievements_count }}</h3>
+                        <small class="text-muted">Completed</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="feature-card text-center">
+                        <i class="fas fa-clock fa-3x text-info mb-3"></i>
+                        <h5>Study Time</h5>
+                        <h3 class="text-primary">{{ user_progress.total_study_time_hours }}h</h3>
+                        <small class="text-muted">Total</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="feature-card text-center">
+                        <i class="fas fa-question-circle fa-3x text-danger mb-3"></i>
+                        <h5>Quizzes Taken</h5>
+                        <h3 class="text-primary">{{ user_progress.quizzes_taken }}</h3>
+                        <small class="text-muted">Total</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h5><i class="fas fa-history"></i> Recent Activity</h5>
+                        <div id="recentActivity">
+                            {% for activity in recent_activity %}
+                            <div class="activity-item">
+                                <strong>{{ activity.type }}</strong><br>
+                                <small>{{ activity.xp_earned }} XP • {{ activity.duration_minutes }} min</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <h5><i class="fas fa-chart-line"></i> Leaderboard</h5>
+                        <div id="leaderboard">
+                            {% for user in leaderboard %}
+                            <div class="activity-item">
+                                <strong>#{{ user.rank }} {{ user.username }}</strong><br>
+                                <small>Level {{ user.level }} • {{ user.xp }} XP</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gamification Section -->
+        <section id="gamification" class="mt-5">
+            <h2 class="mb-4"><i class="fas fa-gamepad"></i> Gamification</h2>
+            
+            <div class="row">
+                <!-- Badges -->
+                <div class="col-md-6 mb-4">
+                    <div class="badge-card">
+                        <h5><i class="fas fa-medal"></i> Badges</h5>
+                        <div class="row">
+                            {% for badge in user_progress.badges %}
+                            <div class="col-6 text-center mb-3">
+                                <div class="badge-icon">{{ badge.icon }}</div>
+                                <small>{{ badge.name }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Achievements -->
+                <div class="col-md-6 mb-4">
+                    <div class="achievement-card">
+                        <h5><i class="fas fa-trophy"></i> Achievements</h5>
+                        <div class="row">
+                            {% for achievement in user_progress.achievements %}
+                            <div class="col-6 text-center mb-3">
+                                <div class="achievement-icon">
+                                    {% if achievement.completed %}
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                    <i class="fas fa-circle text-muted"></i>
+                                    {% endif %}
+                                </div>
+                                <small>{{ achievement.name }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Chart -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="feature-card">
+                        <h5><i class="fas fa-chart-bar"></i> Progress Overview</h5>
+                        <canvas id="progressChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Offline Support Section -->
+        <section id="offline" class="mt-5">
+            <h2 class="mb-4"><i class="fas fa-wifi"></i> Offline Support</h2>
+            
+            <div class="row">
+                <!-- Cache Stats -->
+                <div class="col-md-6 mb-4">
+                    <div class="offline-card">
+                        <h5><i class="fas fa-database"></i> Cache Statistics</h5>
+                        <p><strong>Total Items:</strong> {{ cache_stats.total_items }}</p>
+                        <p><strong>Cache Size:</strong> {{ cache_stats.total_size_mb }} MB</p>
+                        <p><strong>Sync Queue:</strong> {{ cache_stats.sync_queue_size }} items</p>
+                    </div>
+                </div>
+                
+                <!-- Offline Features -->
+                <div class="col-md-6 mb-4">
+                    <div class="feature-card">
+                        <h5><i class="fas fa-mobile-alt"></i> PWA Features</h5>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Offline Content Access</li>
+                            <li><i class="fas fa-check text-success"></i> Local Data Storage</li>
+                            <li><i class="fas fa-check text-success"></i> Sync Queue Management</li>
+                            <li><i class="fas fa-check text-success"></i> Export/Import Data</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Offline Actions -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="feature-card">
+                        <h5><i class="fas fa-cogs"></i> Offline Actions</h5>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <button class="btn btn-primary btn-sm w-100" onclick="exportOfflineData()">
+                                    <i class="fas fa-download"></i> Export Data
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-secondary btn-sm w-100" onclick="cleanupCache()">
+                                    <i class="fas fa-broom"></i> Cleanup Cache
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-info btn-sm w-100" onclick="viewSyncQueue()">
+                                    <i class="fas fa-sync"></i> View Sync Queue
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-success btn-sm w-100" onclick="testOfflineMode()">
+                                    <i class="fas fa-wifi-slash"></i> Test Offline
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Multilingual Support Section -->
+        <section id="multilingual" class="mt-5">
+            <h2 class="mb-4"><i class="fas fa-language"></i> Multilingual Support</h2>
+            
+            <div class="row">
+                <!-- Language Stats -->
+                <div class="col-md-6 mb-4">
+                    <div class="multilingual-card">
+                        <h5><i class="fas fa-chart-pie"></i> Language Statistics</h5>
+                        <p><strong>Supported Languages:</strong> {{ language_stats.total_languages }}</p>
+                        <p><strong>Total Translations:</strong> {{ language_stats.total_translations }}</p>
+                        <p><strong>Active Users:</strong> {{ language_stats.total_users }}</p>
+                    </div>
+                </div>
+                
+                <!-- Language Detection -->
+                <div class="col-md-6 mb-4">
+                    <div class="feature-card">
+                        <h5><i class="fas fa-search"></i> Language Detection</h5>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="languageDetectionText" placeholder="Enter text to detect language...">
+                            <button class="btn btn-primary" onclick="detectLanguage()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div id="languageDetectionResult" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Translation Tool -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="feature-card">
+                        <h5><i class="fas fa-language"></i> Translation Tool</h5>
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label class="form-label">Source Text</label>
+                                <textarea class="form-control" id="sourceText" rows="4" placeholder="Enter text to translate..."></textarea>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-center justify-content-center">
+                                <button class="btn btn-primary" onclick="translateText()">
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Target Language</label>
+                                <select class="form-select mb-2" id="targetLanguage">
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                    <option value="it">Italian</option>
+                                    <option value="pt">Portuguese</option>
+                                </select>
+                                <textarea class="form-control" id="translatedText" rows="4" placeholder="Translation will appear here..." readonly></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supported Languages -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="feature-card">
+                        <h5><i class="fas fa-globe"></i> Supported Languages</h5>
+                        <div class="row" id="supportedLanguages">
+                            <!-- Languages will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            loadSupportedLanguages();
+            setupOfflineDetection();
+            createProgressChart();
+        });
+
+        function initializeApp() {
+            console.log('AI Study Helper Phase 5 initialized');
+            
+            // Set up service worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('ServiceWorker registered'))
+                    .catch(error => console.log('ServiceWorker registration failed'));
+            }
+        }
+
+        function loadSupportedLanguages() {
+            fetch('/api/supported_languages')
+                .then(response => response.json())
+                .then(languages => {
+                    const container = document.getElementById('supportedLanguages');
+                    const languageMenu = document.getElementById('languageMenu');
+                    
+                    languages.forEach(lang => {
+                        // Add to main display
+                        const langCard = document.createElement('div');
+                        langCard.className = 'col-md-3 col-sm-6 mb-3';
+                        langCard.innerHTML = `
+                            <div class="text-center">
+                                <div class="language-flag">${getLanguageFlag(lang.code)}</div>
+                                <div><strong>${lang.name}</strong></div>
+                                <small class="text-muted">${lang.native_name}</small>
+                            </div>
+                        `;
+                        container.appendChild(langCard);
+                        
+                        // Add to dropdown menu
+                        const menuItem = document.createElement('li');
+                        menuItem.innerHTML = `<a class="dropdown-item" href="#" onclick="changeLanguage('${lang.code}')">${lang.name}</a>`;
+                        languageMenu.appendChild(menuItem);
+                    });
+                })
+                .catch(error => console.error('Error loading languages:', error));
+        }
+
+        function getLanguageFlag(code) {
+            const flags = {
+                'en': '🇺🇸', 'es': '🇪🇸', 'fr': '🇫🇷', 'de': '🇩🇪', 'it': '🇮🇹',
+                'pt': '🇵🇹', 'ru': '🇷🇺', 'zh': '🇨🇳', 'ja': '🇯🇵', 'ko': '🇰🇷'
+            };
+            return flags[code] || '🌐';
+        }
+
+        function changeLanguage(langCode) {
+            // In a real app, this would change the interface language
+            console.log('Changing language to:', langCode);
+            // You could implement actual language switching here
+        }
+
+        function detectLanguage() {
+            const text = document.getElementById('languageDetectionText').value;
+            if (!text) return;
+
+            fetch('/api/detect_language', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text: text})
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('languageDetectionResult');
+                if (data.detected_languages) {
+                    let html = '<div class="alert alert-info">';
+                    html += '<strong>Detected Languages:</strong><br>';
+                    data.detected_languages.forEach((lang, index) => {
+                        html += `${index + 1}. ${lang[0].toUpperCase()} (${Math.round(lang[1] * 100)}%)<br>`;
+                    });
+                    html += '</div>';
+                    resultDiv.innerHTML = html;
+                }
+            })
+            .catch(error => console.error('Error detecting language:', error));
+        }
+
+        function translateText() {
+            const sourceText = document.getElementById('sourceText').value;
+            const targetLanguage = document.getElementById('targetLanguage').value;
+            
+            if (!sourceText) return;
+
+            fetch('/api/translate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    text: sourceText,
+                    target_language: targetLanguage
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('translatedText').value = data.translated_text;
+                } else {
+                    document.getElementById('translatedText').value = 'Translation not available';
+                }
+            })
+            .catch(error => console.error('Error translating text:', error));
+        }
+
+        function exportOfflineData() {
+            fetch('/api/export_offline_data')
+                .then(response => response.json())
+                .then(data => {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'offline_data.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                })
+                .catch(error => console.error('Error exporting data:', error));
+        }
+
+        function cleanupCache() {
+            if (confirm('Are you sure you want to clean up old cached content?')) {
+                fetch('/api/cleanup_cache', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({days_old: 30})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Cleaned up ${data.deleted_count} old cache entries`);
+                        location.reload();
+                    }
+                })
+                .catch(error => console.error('Error cleaning up cache:', error));
+            }
+        }
+
+        function viewSyncQueue() {
+            fetch('/api/sync_queue')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Sync queue:', data.sync_queue);
+                    alert(`Sync queue has ${data.sync_queue.length} items`);
+                })
+                .catch(error => console.error('Error viewing sync queue:', error));
+        }
+
+        function testOfflineMode() {
+            const indicator = document.getElementById('offlineIndicator');
+            const offlineText = document.getElementById('offlineText');
+            
+            if (navigator.onLine) {
+                indicator.style.display = 'block';
+                indicator.classList.remove('offline');
+                offlineText.textContent = 'Online';
+                
+                // Simulate going offline
+                setTimeout(() => {
+                    indicator.classList.add('offline');
+                    offlineText.textContent = 'Offline';
+                }, 2000);
+            } else {
+                indicator.style.display = 'block';
+                indicator.classList.add('offline');
+                offlineText.textContent = 'Offline';
+            }
+        }
+
+        function setupOfflineDetection() {
+            window.addEventListener('online', function() {
+                const indicator = document.getElementById('offlineIndicator');
+                indicator.style.display = 'block';
+                indicator.classList.remove('offline');
+                document.getElementById('offlineText').textContent = 'Online';
+                
+                setTimeout(() => {
+                    indicator.style.display = 'none';
+                }, 3000);
+            });
+
+            window.addEventListener('offline', function() {
+                const indicator = document.getElementById('offlineIndicator');
+                indicator.style.display = 'block';
+                indicator.classList.add('offline');
+                document.getElementById('offlineText').textContent = 'Offline';
+            });
+        }
+
+        function createProgressChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Badges', 'Achievements', 'Study Time', 'Quizzes'],
+                    datasets: [{
+                        data: [
+                            {{ user_progress.badges_count }},
+                            {{ user_progress.achievements_count }},
+                            {{ user_progress.total_study_time_minutes }},
+                            {{ user_progress.quizzes_taken }}
+                        ],
+                        backgroundColor: [
+                            '#ff6b6b',
+                            '#4ecdc4',
+                            '#45b7d1',
+                            '#96ceb4'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

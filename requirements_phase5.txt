@@ -1,0 +1,22 @@
+# Phase 5: Gamification, PWA Offline Support, and Multilingual Support
+# Core dependencies
+Flask==2.3.3
+Werkzeug==2.3.7
+
+# Image processing and OCR
+opencv-python==4.8.1.78
+pytesseract==0.3.10
+Pillow==10.0.1
+numpy==1.24.3
+
+# AI and ML (lightweight versions)
+transformers==4.35.2
+torch==2.1.1
+sentence-transformers==2.2.2
+accelerate==0.24.1
+
+# Testing
+playwright==1.40.0
+
+# Additional utilities
+python-dateutil==2.8.2
