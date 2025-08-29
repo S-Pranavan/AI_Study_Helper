@@ -23,7 +23,7 @@
                 </div>
                 <h5 class="card-title">Enhanced OCR</h5>
                 <p class="card-text">Extract text from handwritten notes, textbook pages, and diagrams using AI-powered OCR.</p>
-                <button class="btn btn-primary" onclick="showOCRModal()">
+                <button class="btn btn-primary" onclick="toggleOCRInterface()">
                     <i class="fas fa-arrow-right me-2"></i>Start OCR
                 </button>
             </div>
@@ -76,95 +76,92 @@
     </div>
 </div>
 
-<!-- OCR Modal -->
-<div class="modal" id="ocrModal" style="display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-    <div class="modal-dialog modal-xl" style="margin: 1.75rem auto; max-width: 90%;">
-        <div class="modal-content" style="background-color: white; border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);">
-            <div class="modal-header bg-primary text-white" style="padding: 1rem; border-bottom: 1px solid #dee2e6; border-top-left-radius: 0.375rem; border-top-right-radius: 0.375rem;">
-                <h5 class="modal-title" id="ocrModalLabel">
-                    <i class="fas fa-camera me-2"></i>Enhanced OCR Image Processing
-                </h5>
-                <button type="button" class="btn-close btn-close-white" onclick="closeOCRModal()" aria-label="Close" style="background: none; border: none; font-size: 1.5rem; color: white; cursor: pointer;">&times;</button>
+<!-- OCR Interface (Collapsible) -->
+<div id="ocrInterface" class="mt-4" style="display: none;">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-camera me-2"></i>Enhanced OCR Image Processing
+                <button type="button" class="btn btn-sm btn-outline-light float-end" onclick="toggleOCRInterface()">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </h5>
+        </div>
+        <div class="card-body">
+            <!-- OCR System Info -->
+            <div class="alert alert-info mb-3">
+                <h6><i class="fas fa-info-circle me-2"></i>Enhanced OCR Capabilities</h6>
+                <p class="mb-1"><strong>Supported:</strong> Handwritten notes, textbook pages, diagrams, mathematical content, low-quality images</p>
+                <p class="mb-0"><strong>Features:</strong> Advanced preprocessing, content classification, study suggestions, text filtering</p>
             </div>
-            <div class="modal-body" style="padding: 1rem;">
-                <!-- OCR System Info -->
-                <div class="alert alert-info mb-3" style="background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 0.75rem; border-radius: 0.375rem;">
-                    <h6><i class="fas fa-info-circle me-2"></i>Enhanced OCR Capabilities</h6>
-                    <p class="mb-1"><strong>Supported:</strong> Handwritten notes, textbook pages, diagrams, mathematical content, low-quality images</p>
-                    <p class="mb-0"><strong>Features:</strong> Advanced preprocessing, content classification, study suggestions, text filtering</p>
-                </div>
 
-                <!-- Single File Upload -->
-                <div class="mb-4">
-                    <h6><i class="fas fa-image me-2"></i>Single Image Upload</h6>
-                    <div class="upload-area border-2 border-dashed border-primary rounded p-4 text-center" id="singleUploadArea">
-                        <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-3"></i>
-                        <h6>Drag & Drop Image Here</h6>
-                        <p class="text-muted small">or click to browse</p>
-                        <p class="text-muted small">Supports: PNG, JPG, GIF, BMP, TIFF, WEBP</p>
-                        <input type="file" id="singleFileInput" accept="image/*" class="d-none">
-                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('singleFileInput').click()">
-                            <i class="fas fa-folder-open me-2"></i>Choose Image
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Batch File Upload -->
-                <div class="mb-4">
-                    <h6><i class="fas fa-images me-2"></i>Batch Image Upload</h6>
-                    <div class="upload-area border-2 border-dashed border-success rounded p-4 text-center" id="batchUploadArea">
-                        <i class="fas fa-cloud-upload-alt fa-2x text-success mb-3"></i>
-                        <h6>Drag & Drop Multiple Images Here</h6>
-                        <p class="text-muted small">or click to browse multiple files</p>
-                        <p class="text-muted small">Supports: PNG, JPG, GIF, BMP, TIFF, WEBP</p>
-                        <input type="file" id="batchFileInput" accept="image/*" multiple class="d-none">
-                        <button class="btn btn-success btn-sm" onclick="document.getElementById('batchFileInput').click()">
-                            <i class="fas fa-folder-open me-2"></i>Choose Multiple Images
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Processing Status -->
-                <div class="processing-spinner text-center d-none" id="processingSpinner">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Processing...</span>
-                    </div>
-                    <p class="mt-2 text-muted">Processing image with enhanced OCR...</p>
-                    <small class="text-muted">This may take a few moments for complex images</small>
-                </div>
-
-                <!-- Results -->
-                <div id="ocrResults" class="d-none">
-                    <h6><i class="fas fa-file-alt me-2"></i>OCR Results & Analysis</h6>
-                    
-                    <!-- Content Classification -->
-                    <div class="row mb-3" id="contentClassification">
-                        <!-- Will be populated dynamically -->
-                    </div>
-                    
-                    <!-- Text Results -->
-                    <div class="card bg-light mb-3">
-                        <div class="card-header">
-                            <h6 class="mb-0">Extracted Text</h6>
-                        </div>
-                        <div class="card-body">
-                            <div id="resultsContent"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Study Suggestions -->
-                    <div class="card bg-success text-white mb-3" id="studySuggestions">
-                        <div class="card-header">
-                            <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>AI Study Suggestions</h6>
-                        </div>
-                        <div class="card-body">
-                            <div id="suggestionsContent"></div>
-                        </div>
-                    </div>
+            <!-- Single File Upload -->
+            <div class="mb-4">
+                <h6><i class="fas fa-image me-2"></i>Single Image Upload</h6>
+                <div class="upload-area border-2 border-dashed border-primary rounded p-4 text-center" id="singleUploadArea">
+                    <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-3"></i>
+                    <h6>Drag & Drop Image Here</h6>
+                    <p class="text-muted small">or click to browse</p>
+                    <p class="text-muted small">Supports: PNG, JPG, GIF, BMP, TIFF, WEBP</p>
+                    <input type="file" id="singleFileInput" accept="image/*" class="d-none">
+                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('singleFileInput').click()">
+                        <i class="fas fa-folder-open me-2"></i>Choose Image
+                    </button>
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 0.75rem; border-top: 1px solid #dee2e6; text-align: right;">
-                <button type="button" class="btn btn-secondary" onclick="closeOCRModal()" style="background-color: #6c757d; border-color: #6c757d; color: white; padding: 0.375rem 0.75rem; border-radius: 0.375rem; cursor: pointer;">Close</button>
+
+            <!-- Batch File Upload -->
+            <div class="mb-4">
+                <h6><i class="fas fa-images me-2"></i>Batch Image Upload</h6>
+                <div class="upload-area border-2 border-dashed border-success rounded p-4 text-center" id="batchUploadArea">
+                    <i class="fas fa-cloud-upload-alt fa-2x text-success mb-3"></i>
+                    <h6>Drag & Drop Multiple Images Here</h6>
+                    <p class="text-muted small">or click to browse multiple files</p>
+                    <p class="text-muted small">Supports: PNG, JPG, GIF, BMP, TIFF, WEBP</p>
+                    <input type="file" id="batchFileInput" accept="image/*" multiple class="d-none">
+                    <button class="btn btn-success btn-sm" onclick="document.getElementById('batchFileInput').click()">
+                        <i class="fas fa-folder-open me-2"></i>Choose Multiple Images
+                    </button>
+                </div>
+            </div>
+
+            <!-- Processing Status -->
+            <div class="processing-spinner text-center d-none" id="processingSpinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Processing...</span>
+                </div>
+                <p class="mt-2 text-muted">Processing image with enhanced OCR...</p>
+                <small class="text-muted">This may take a few moments for complex images</small>
+            </div>
+
+            <!-- Results -->
+            <div id="ocrResults" class="d-none">
+                <h6><i class="fas fa-file-alt me-2"></i>OCR Results & Analysis</h6>
+                
+                <!-- Content Classification -->
+                <div class="row mb-3" id="contentClassification">
+                    <!-- Will be populated dynamically -->
+                </div>
+                
+                <!-- Text Results -->
+                <div class="card bg-light mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Extracted Text</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="resultsContent"></div>
+                    </div>
+                </div>
+                
+                <!-- Study Suggestions -->
+                <div class="card bg-success text-white mb-3" id="studySuggestions">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>AI Study Suggestions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="suggestionsContent"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -275,16 +272,7 @@ let currentFiles = [];
 document.addEventListener('DOMContentLoaded', function() {
     setupDragAndDrop();
     setupFileInputs();
-    
-    // Add click outside modal to close
-    const modal = document.getElementById('ocrModal');
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                closeOCRModal();
-            }
-        });
-    }
+    console.log('OCR interface initialized successfully');
 });
 
 // Setup drag and drop functionality
@@ -569,36 +557,14 @@ function showError(message) {
     resultsDiv.classList.remove('d-none');
 }
 
-function showOCRModal() {
-    try {
-        const modalElement = document.getElementById('ocrModal');
-        if (!modalElement) {
-            console.error('OCR modal element not found!');
-            return;
-        }
-        
-        // Show the modal
-        modalElement.style.display = 'block';
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
-        
-        console.log('OCR modal shown successfully');
-    } catch (error) {
-        console.error('Error showing OCR modal:', error);
-    }
-}
-
-function closeOCRModal() {
-    try {
-        const modalElement = document.getElementById('ocrModal');
-        if (!modalElement) return;
-        
-        // Hide the modal
-        modalElement.style.display = 'none';
-        document.body.style.overflow = 'auto'; // Restore background scrolling
-        
-        console.log('OCR modal closed successfully');
-    } catch (error) {
-        console.error('Error closing OCR modal:', error);
+function toggleOCRInterface() {
+    const interface = document.getElementById('ocrInterface');
+    if (interface.style.display === 'none' || interface.style.display === '') {
+        interface.style.display = 'block';
+        console.log('OCR interface shown');
+    } else {
+        interface.style.display = 'none';
+        console.log('OCR interface hidden');
     }
 }
 
