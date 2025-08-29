@@ -8,11 +8,11 @@ Werkzeug==2.3.7
 # Database
 # sqlite3 is built into Python, no pip install needed
 
-# Image processing (Phase 1)
+# Image processing (Phase 1) - Enhanced with EasyOCR
 opencv-python==4.8.1.78
-pytesseract==0.3.10
 Pillow==10.0.1
 numpy==1.24.3
+easyocr==1.7.2
 
 # AI Models (Phase 2) - Simplified for Phase 4
 # Note: Phase 4 uses rule-based AI responses instead of large models
